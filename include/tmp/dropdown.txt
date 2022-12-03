@@ -1,0 +1,191 @@
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////// Rename a button //
+/////////////////////////////////////////////////////////////////////////////
+// Rename a button
+// @buttonPath: the path of the button to be renamed
+// @str: the new button name
+[RoutineDef, ZFU_RenameButton,
+	[If, [MemGetSize, ZFU_Mem_Temp],, [MemCreate, ZFU_Mem_Temp, 256]]
+	[MemWriteString, ZFU_Mem_Temp, str]
+	[FileExecute, [Var, ZFILEUTILDLL], RenameButton, buttonPath,, ZFU_Mem_Temp]
+	[MemDelete, ZFU_Mem_Temp]
+, buttonPath, str]
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////// Bypass renaming user input box //
+/////////////////////////////////////////////////////////////////////////////
+// Set the name to use instead of asking to the user
+// @str: the text/string that will be substituted to the user input
+[RoutineDef, ZFU_RenameSetNext,
+	[FileExecute, [Var, ZFILEUTILDLL], RenameSetNext, str]
+, str]
+
+// Rename "something" by giving the path to the button that ask for the rename box
+// @buttonPath: the path of the button that asks the user to rename "something"
+// @str: the text/string that will be substituted to the user input
+[RoutineDef, ZFU_RenameFromButtonPath,
+	[If, (([IExists, buttonPath]) && ([IsEnabled, buttonPath])),
+		[FileExecute, [Var, ZFILEUTILDLL], RenameSetNext, str]
+		[IPress, buttonPath]
+	]
+, buttonPath, str]
+
+// Rename current SubTool
+// @str: the new SubTool name
+[RoutineDef, ZFU_RenameCurrentSubTool,
+	[RoutineCall, ZFU_RenameFromButtonPath, "Tool:SubTool:Rename", str]
+, str]
+
+// Rename current Layer
+// @str: the new Layer name
+[RoutineDef, ZFU_RenameCurrentLayer,
+	[RoutineCall, ZFU_RenameFromButtonPath, "Tool:Layers:Rename", str]
+, str]
+
+// Rename Transpose Units
+// @str: the new Transpose Units
+[RoutineDef, ZFU_RenameTransposeUnits,
+	[RoutineCall, ZFU_RenameFromButtonPath, "Preferences:Transpose Units:Set Units", str]
+
+]
+///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Create blank SubTool //
+/////////////////////////////////////////////////////////////////////////////
+[RoutineDef, ZFU_AppendNewSubTool,
+	[VarSet, resIndex, [FileExecute, [Var, dllPath], AppendNewSubTool, name]]
+, name, resIndex]
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////// Dropdowns //
+/////////////////////////////////////////////////////////////////////////////
+// Create a new Dropdown data (Dropdown is not shown, it's only the data)
+// @resultDropdown: the resulting dropdown (or more exactly dropdown id represented as an integer value)
+[RoutineDef, ZFU_DropdownNew,
+	[VarSet, resDropdown, [FileExecute, [Var, ZFILEUTILDLL], DropdownNew]]
+, resDropdown]
+
+// Delete a Dropdown (the Dropdown doesn't exist anymore after deletion)
+// @dropdown: the dropdown to delete
+[RoutineDef, ZFU_DropdownDelete,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],,
+		[FileExecute, [Var, ZFILEUTILDLL], DropdownDelete]
+	]
+, dropdown]
+
+// Clear a Dropdown (the Dropdown still exists after clearing it, but it's empty)
+// @dropdown: the dropdown to clear
+[RoutineDef, ZFU_DropdownClear,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],,
+		[FileExecute, [Var, ZFILEUTILDLL], DropdownClear]
+	]
+, dropdown]
+
+// Get the strings count in a Dropdown
+// @dropdown: the dropdown
+// @resCount: the resulting count
+[RoutineDef, ZFU_DropdownGetCount,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],
+		[VarSet, resCount, 0]
+	,
+		[VarSet, resCount, [FileExecute, [Var, ZFILEUTILDLL], DropdownGetCount]]
+	]
+, dropdown, resCount]
+
+// Get a string in a Dropdown
+// @dropdown: the dropdown
+// @index2: the index2 in the dropdown list
+// @resStr: the resulting string
+[RoutineDef, ZFU_DropdownGet,
+	[VarSet, str, ""]
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],,
+		[If, [MemGetSize, ZFU_Mem_Temp],, [MemCreate, ZFU_Mem_Temp, 256]]
+		[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownGet,, index2, ZFU_Mem_Temp],,
+			[MemReadString, ZFU_Mem_Temp, str]
+		]
+		[MemDelete, ZFU_Mem_Temp]
+	]
+	[VarSet, resStr, str]
+, dropdown, index2, resStr]
+
+// Set a string in a Dropdown
+// @dropdown: the dropdown
+// @index2: the index2 in the dropdown list
+// @str: the new string value
+[RoutineDef, ZFU_DropdownSet,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],,
+		[FileExecute, [Var, ZFILEUTILDLL], DropdownSet, str, index2]
+	]
+, dropdown, index2, str]
+
+// Search for a string in a Dropdown
+// @dropdown: the dropdown
+// @str: the string to search for
+// @resIndex: the resulting index2 (-1 if not found)
+[RoutineDef, ZFU_DropdownFind,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],
+		[VarSet, resIndex, -1]
+	,
+		[VarSet, resIndex, [FileExecute, [Var, ZFILEUTILDLL], DropdownFind, str]]
+	]
+, dropdown, str, resIndex]
+
+// Append a string at the end of a Dropdown
+// @dropdown: the dropdown
+// @str: the string to add
+[RoutineDef, ZFU_DropdownAdd,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],,
+		[FileExecute, [Var, ZFILEUTILDLL], DropdownAdd, str]
+	]
+, dropdown, str]
+
+// Insert a string in a Dropdown
+// @dropdown: the dropdown
+// @index2: the index2 where to insert the string in the dropdown list (if index2 = list count, then the string is appended at the end)
+// @str: the string to insert
+[RoutineDef, ZFU_DropdownInsert,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],,
+		[FileExecute, [Var, ZFILEUTILDLL], DropdownInsert, str, index2]
+	]
+, dropdown, index2, str]
+
+// Remove a string from the Dropdown
+// @dropdown: the dropdown
+// @index2: the index2 in the dropdown list
+[RoutineDef, ZFU_DropdownRemove,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],,
+		[FileExecute, [Var, ZFILEUTILDLL], DropdownRemove,, index2]
+	]
+, dropdown, index2]
+
+// Set the selected string in a Dropdown
+// @dropdown: the dropdown
+// @index2: the index2 in the dropdown list
+[RoutineDef, ZFU_DropdownSelect,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],,
+		[FileExecute, [Var, ZFILEUTILDLL], DropdownSelect,, index2]
+	]
+, dropdown, index2]
+
+// Get the selected string in a Dropdown
+// @dropdown: the dropdown
+// @resIndex: the resulting index2 of the selected string in the dropdown list
+[RoutineDef, ZFU_DropdownGetSelected,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],
+		[VarSet, resIndex, -1]
+	,
+		[VarSet, resIndex, [FileExecute, [Var, ZFILEUTILDLL], DropdownGetSelected]]
+	]
+, dropdown, resIndex]
+
+// Show/open a Dropdown and let the user selecting one of its strings
+// @dropdown: the dropdown
+// @buttonPath: the path to the button where to open the dropdown
+// @resIndex: the resulting index2 of the string selected by the user
+[RoutineDef, ZFU_DropdownShow,
+	[If, [FileExecute, [Var, ZFILEUTILDLL], DropdownLoad,, dropdown],,
+		[VarSet, resIndex, [FileExecute, [Var, ZFILEUTILDLL], DropdownShow, buttonPath]]
+	]
+, dropdown, buttonPath, resIndex]

@@ -1,0 +1,128 @@
+[VarDef,batchFolderPath,""] 
+[VarDef, ZFILEUTILDLL, [FileNameResolvePath,"Dll\ZFileUtils64.dll"]]
+[VarDef, ZBCDLL, [FileNameResolvePath,"Dll\zbc.dll"]]
+[VarDef,LOGPATH,  [FileNameResolvePath,"D:\Program Files\Pixologic\ZBrush 2022\ZScripts\logs\logzb.txt"]]
+[VarSet,ROOTPATH,[FileNameResolvePath,""]]
+[VarDef,BLENDERPATH,  [FileNameResolvePath,"E:\Blender\versionlauncher\daily\blender-3.2.2-stable+daily.bcfdb14560e7\blender.exe"]]
+[VarDef, DLLFUNCTION, "LaunchAppWithFile"]
+[VarDef, batPath,[FileNameResolvePath,"launch.bat"]]
+[VarDef, FILE_SEPARATOR, [StrFromAsc,92]]
+[VarDef, SPACE, [StrFromAsc," "]]
+[VarDef,QUOTES,[StrFromAsc,34]]
+<zscriptinsert,"include\TpqzLog.txt">
+<zscriptinsert,"include\Global.txt">
+
+[RoutineDef, lastIndexOf, // -1 if no result
+[VarSet, i,0]
+[VarSet, start,0]
+[VarSet, end,0]
+[VarSet, result,-1]
+[VarSet, current,""]
+[VarSet, gResult,0]
+[Loop,[StrLength,string],
+		[VarSet, current,[StrExtract, string,start,end]]
+		[if,[StrFind, current,char]==0,
+         [VarSet, result,i]
+		]
+	[VarSet, start,i+1]
+	[VarSet, end,start]
+,i]
+[VarSet, gResult,result]
+,string,char]
+
+[RoutineCall, lastIndexOf,ROOTPATH,FILE_SEPARATOR]
+[VarSet, LOCALPATH, [StrExtract, ROOTPATH,0,gResult]]
+//
+[RoutineDef,writeBat, // write a bat file
+   //"E:\Blender\versionlauncher\daily\blender-3.2.2-stable+daily.bcfdb14560e7\blender.exe" -b -P "D:\Program Files\Pixologic\ZBrush 2022\ZScripts\PluginDev\blenderheadless\script-1.py" -- "e:\test\"
+      [VarSet, part0,[StrMerge,QUOTES,BLENDERPATH,QUOTES]]
+      [VarSet, part1," -b -P "]
+      [VarSet, part2,[StrMerge,QUOTES,LOCALPATH,"script-",#param,".py",QUOTES]]
+      [VarSet, part3," -- "]
+      [VarSet, part4,[StrMerge,QUOTES,"e:\test\",QUOTES]]
+      [VarSet, batContent,[StrMerge,part0,part1,part2,part3,part4]]
+      [RoutineCall, LogMessage,batContent]
+    [MemCreate, memString, [StrLength,batContent ], 0] // initialisation memblocK
+    [MemWriteString,memString,batContent,0]
+    [MemSaveToFile,memString,batPath,1]
+    [MemDelete, memString]
+    ,
+    param
+]
+
+[RoutineDef,launchExecutable,
+    //build the full path to the app to launch
+      [VarSet,appPath, [strmerge,QUOTES,
+    [FileNameResolvePath,filename],QUOTES]]
+    //Create a file with the executable
+    [VarSet,dllPath,[FileNameResolvePath,ZFILEUTILDLL]]
+    [VarSet, ZFileUTils_AppPath, [FileExecute, [Var,dllPath], Version]]
+    [NoteBar,[StrMerge," file to execute : ",appPat]]
+    //create memblock for app path
+    [MemCreate,ZFileUTils_AppPath, 256, 0]
+    //write app path to memblock
+    [MemWriteString,ZFileUTils_AppPath,appPath,0]
+    [VarSet,err,[FileExecute,[Var,dllPath],DLLFUNCTION,#argument,,ZFileUTils_AppPath]]
+    //delete the memblock as we've done with it
+    [MemDelete,ZFileUTils_AppPath]
+    //an error
+    [If,err,[Note,"An error occurred.",,2]]
+      [Delay,1]
+      , filename, argument
+]
+
+[RoutineCall, LogMessage,"--- start ---"]
+[VarSet, resultFilePath, [FileNameResolvePath,"obj_export.obj"]]
+[VarDef,previousRuntime, [ZBrushInfo,2]]
+[VarDef,time, [ZBrushInfo,2]]
+[VarDef,testTime, 0]
+[VarSet,clickRuntime,0]
+
+[RoutineDef,verifyAndLaunch,
+   [VarSet, i,0]
+   [RoutineCall, LogMessage,"--- verifyAndLaunch ---"]
+   [Loop, 999999999,
+     // [RoutineCall, LogMessage,testTime]
+      [NoteBar, "----"]
+      [VarSet,clickRuntime,[ZBrushInfo,2]]
+      [VarSet,testTime,clickRuntime-previousRuntime]
+      // if file exists
+      [If,[FileExists,resultFilePath],
+      // open image
+            //[Note, "Got result !!!"]
+               [NoteBar, "--got result !!!--"]
+                     [RoutineCall, LogMessage,"Got result"]
+            [LoopExit]
+         ,
+            [NoteBar, "not loaded"]
+      ]
+      [VarSet,previousRuntime,clickRuntime]
+   ]
+   [Note, "--ended script --"]
+   [FileNameSetNext,[FileNameResolvePath,"obj_export.obj"]]
+   [IPress,Tool:Import]
+      [Note, "-- end --"]
+]
+
+[RoutineDef,callScript,
+   [RoutineCall, LogMessage,[StrMerge,"--- callscript --- param ",#param]]
+   [RoutineCall, writeBat,#param]
+   [RoutineCall, LogMessage,"--- bouton click ---"]
+   [FileNameSetNext,[FileNameResolvePath,"obj.obj"]]
+   [IPress,Tool:Export]
+   [RoutineCall,launchExecutable,  [FileNameResolvePath,"launch.bat"],""]
+   [RoutineCall,verifyAndLaunch]
+,
+param]
+
+[IButton,"python script UV", "launch Blender headless",
+   [RoutineCall, callScript,0]
+,,180,,,40]
+
+[IButton,"python script TurnQuad", "launch Blender headless",
+  [RoutineCall, callScript,1]
+,,180,,,40]
+
+[IButton,"python script TurnQuad", "launch Blender headless",
+  [RoutineCall, callScript,2]
+,,180,,,40]

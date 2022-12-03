@@ -1,0 +1,1 @@
+"E:\Blender\versionlauncher\daily\blender-3.2.2-stable+daily.bcfdb14560e7\blender.exe" -b -P "D:\Program Files\Pixologic\ZBrush 2022\ZScripts\PluginDev\blenderheadless\script-2.py" -- "e:\test\"

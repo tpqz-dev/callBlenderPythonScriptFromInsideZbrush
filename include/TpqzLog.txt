@@ -1,0 +1,96 @@
+//********************************************************
+// Description Logs for zbrush
+//********************************************************
+//[VarDef, ZBCDLL, "path to the dll"] // put this in your code
+// Call the routine with [RoutineCall,LogMessage,[StrMerge,"FileExists pathName " ,pathName]]
+// use mtails or notepad++ to read logs http://ophilipp.free.fr/op_tail.htm
+
+/*
+// Test your logs
+// init your scripts with those lines
+[VarDef, ZBCDLL, "zbc.dll"] 
+[VarDef,LOGPATH, [FileNameResolvePath,"logzb.txt"]] 
+//zscriptinsert,"TpqzLog.txt"
+// use this button to log values
+[IButton,"test logs","logs",
+  [RoutineCall,LogMessage, [strmerge," values(0) = ",values(0)  ] ]
+,,150,,,50]
+// button to show mtail
+[IButton,"view logs","logs",
+//[RoutineCall,launchExecutable, "C:\Program Files (x86)\Notepad++\notepad++.exe",LOGPATH]
+[RoutineCall,launchExecutable,"D:\Softwares\mTail.exe",LOGPATH ]
+,,150,,,50]
+*/
+
+// change log path 
+[RoutineDef,SetLogPath/*Set the path of the log file*/,
+[MemCreate,DLLMem, 256, 0]	
+	[VarSet, stringArg,argument]
+//	[note,[strmerge,"logmessage ",stringArg]]
+	[VarSet, err, [FileExecute,[Var,ZBCDLL],"SetLogPath",#stringArg,,DLLMem]]
+	[MemDelete,DLLMem]
+, argument
+]
+
+// init logpath
+[RoutineDef,LogMessage /*Log a message in a file*/,
+[RoutineCall,SetLogPath,LOGPATH]
+[MemCreate,DLLMem, 256, 0]	
+	[VarSet, stringArg,argument]
+	//[note,[strmerge,"logmessage ",stringArg]]
+	[VarSet, err, [FileExecute,[Var,ZBCDLL],"LogToFile",#stringArg,,DLLMem]]
+	[MemDelete,DLLMem]
+, argument
+]
+
+
+[RoutineDef,launchLogExecutable,
+    //build the full path to the app to launch
+      [VarSet,appPath, [strmerge,QUOTES,
+    [FileNameResolvePath,filename],QUOTES]]
+    //Create a file with the executable
+    [VarSet,dllPath,[FileNameResolvePath,ZFILEUTILDLL]]
+    [VarSet, ZFileUTils_AppPath, [FileExecute, [Var,dllPath], Version]]
+    [NoteBar,[StrMerge," file to execute : ",appPat]]
+    //create memblock for app path
+    [MemCreate,ZFileUTils_AppPath, 256, 0]
+    //write app path to memblock
+    [MemWriteString,ZFileUTils_AppPath,appPath,0]
+    [VarSet,err,[FileExecute,[Var,dllPath],DLLFUNCTION,#argument,,ZFileUTils_AppPath]]
+    //delete the memblock as we've done with it
+    [MemDelete,ZFileUTils_AppPath]
+    //an error
+    [If,err,[Note,"An error occurred.",,2]]
+      [Delay,1]
+      , filename, argument
+]
+
+// List thecontent of an array in a string arrays args array return string  [RoutineCall,ListArray,anArray]
+[RoutineDef, ListLogArray/* List the arrays in a string*/,
+	[VarSet,gResult,""]
+	
+	[VarDef,i,0]
+	[VarDef,tmpString,""]
+	[VarSet,tmpString,""]
+	[VarDef,separator,""]
+	[Loop, [VarSize,array],
+		[If, i==0,
+			[VarSet,separator,""]
+		,
+			[VarSet,separator,","]
+		]
+
+		[VarSet,tmpString,[StrMerge,tmpString, separator,#array(i)]]
+		,
+		i
+	]
+	[VarSet,gResult,tmpString]
+,
+array
+]
+
+//
+// [IButton,"view logs","logs",
+// //[RoutineCall,launchExecutable, "C:\Program Files (x86)\Notepad++\notepad++.exe",LOGPATH]
+// [RoutineCall,launchExecutable,MTAILPATH,LOGPATH ]
+// ,,150,,,50]

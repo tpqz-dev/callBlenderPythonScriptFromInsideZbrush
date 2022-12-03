@@ -1,0 +1,70 @@
+
+[RoutineDef,is3d,
+
+	// is a 3dtool or ZSpheres selected?
+	[VarSet, gResult, 0 ]					// initialize variable to zero
+
+	[If,[IGet,Transform:Edit ] == 1,		// edit mode active?
+		[VarSet, gResult, 1 ]
+				[NoteBar, "No Tool in edit mode, aborting..." ]
+	]
+	[If, [IGet, Transform:Move ] == 1,		// move mode active?
+		[VarSet, gResult, 1 ]
+				[NoteBar, "No Tool in edit mode, aborting..." ]
+	]	
+	[If, [IGet, Transform:Scale ] == 1,		// scale mode active?
+		[VarSet, gResult, 1 ]
+				[NoteBar, "No Tool in edit mode, aborting..." ]
+	]	
+	[If, [IGet, Transform:Rotate ] == 1,	// rotate mode active?
+		[VarSet, gResult, 1 ]
+				[NoteBar, "No Tool in edit mode, aborting..." ]
+	]	
+//[IExists,Interface item path]
+     [If,[IExists,Tool:Geometry:ZRemesher]==0,
+        [NoteBar, "No Object selected or not a Polymesh please press the make polymesh 3d button" ]
+        [VarSet, gResult, 0 ]
+		,
+		[VarSet, gResult, 1 ]
+     ]
+
+   [If,[ZSphereEdit,,]==0,
+     [VarSet, gResult, 0 ]
+	 		[NoteBar, "it's a Zsphere bro..." ]
+    ]
+
+	[If, gResult == 0,
+
+		[Exit ]
+	]
+]
+
+[RoutineDef, confirmBox,
+		[VarSet, gResult,0]
+        [NoteIButton,"Proceed"][NoteIButton,"Cancel"]/*Option buttons*/
+        [VarSet,output,[Note,"\C8DCDE2\nDo you really want to do that ?.",,0,3027773,48,400, ,1,1,0,0,]]/*the note that displays the buttons, the return response is stored in the output variable*/
+	    [If,output==1,[VarSet, gResult,1]]/*code for first button press*/
+        [If,output==2,[VarSet, gResult,0]]/*code for second button press*/
+]
+
+
+[RoutineDef,CreateValueButton/*creatte a 3 value button*/,
+
+	[vardef, split(3)]
+	[RoutineCall,SplitString,buttonString,"|",split]
+
+	
+	[VarDef, array(3)]
+	[VarSet,array(0), [strmerge,subpalette,":", split(0)]]
+	[VarSet,array(1), [strmerge,"",split(1)]]
+	[VarSet,array(2),  [strmerge,"",split(2)]]
+    , 
+	// variables
+	buttonString, subpalette,array
+]
+
+
+[RoutineDef,LogMessage,
+
+,
+str]

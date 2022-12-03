@@ -1,0 +1,4 @@
+[VarDef,gResult,""]
+[vardef, FILE_SEPARATOR, [StrFromAsc,92]]
+[vardef, SPACE, [StrFromAsc," "]]
+[vardef,QUOTES,[StrFromAsc,34]]

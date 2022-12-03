@@ -1,0 +1,130 @@
+// equality of strings // requires string find
+[RoutineDef, StrEquals,
+	[VarSet, gResult,0]
+[If,
+	([StrFind,str1,str2 ]>-1) && ([StrLength, str1]==[StrLength, str2])
+	,
+	[VarSet, gResult,1]
+	,
+	[VarSet, gResult,0]
+]
+,str1,str2]
+
+
+[RoutineDef, SplitString /* Split a string
+//usage
+[RoutineCall, GetCharCount,astring,"/"]
+[VarDef,arrayItems(gResult+1)]
+[RoutineCall, SplitString,astring,"/",arrayItems]
+[RoutineCall, NoteFromArray, arrayItems]
+*/,
+	[VarSet, i,0]
+	[VarSet, index,0]
+	[VarSet, start,0]
+	[VarSet, end,0]
+	[VarSet, accumulator,""]
+	[VarSet, current,""]
+	[VarSet, gResult,0]
+	
+	[VarSet,arraySize,[VarSize,array]+1]
+	[Loop,[StrLength,string],
+		[VarSet, current,[StrExtract, string,start,end]]
+		//[RoutineCall,LogMessage,[StrMerge," current ",current]]
+		[if,[StrFind, current,char]==0,
+			//[RoutineCall,LogMessage,[StrMerge,"SplitString accumulator ",index]]
+			[VarSet, array(index),accumulator]
+			[VarSet, index,index+1]
+			[VarSet, accumulator, ""]
+		
+			,
+		 	[VarSet, accumulator, [strmerge,accumulator,current]]
+			 	
+		]
+	[VarSet, start,i+1]
+	[VarSet, end,start]
+
+	,i]
+	[VarSet, array(index),accumulator]
+	//[VarSet, gResult,[VarSize,[StrLength,string]]]
+,string,char,array]
+
+[RoutineDef,CheckIsFile,//routine to check if it's a file (not a folder)
+		[VarSet,isF,0]
+		[VarSet,fileExt,""]		
+		[If,([StrLength,file]>2),//we'll assume the file name is at least 2 chars			
+			[VarSet,fileExt,[FileNameExtract,file,4]]//and the file has an extension			
+			[If,[StrLength,fileExt],[VarSet,isF,1]]		
+		]	
+,isF,file]	
+
+[RoutineDef,renameFile ,
+	[VarSet,dllPath,[FileNameResolvePath,ZFILEUTILDLL]]
+	[MemCreate, ZFileUtils_CopyFile, 256, 0]
+	//  //write the file name to the memblock
+	[MemWriteString,ZFileUtils_CopyFile,newpath,0]
+	//if the file exists, rename it
+	[If,[FileExists,oldpath],
+	[VarSet,err,[FileExecute,[Var,dllPath],"FileRename",oldpath,,ZFileUtils_CopyFile]]
+	]
+	//delete the memblock as we've finished with it
+	[MemDelete,ZFileUtils_CopyFile]
+	[If,err,[NoteBar,"An error occurred."],[NoteBar,"File renamed"]]
+	,
+	oldpath,newpath
+]
+
+[RoutineDef,GetFiles,
+	[VarSet,fileIndex,0]
+	[VarSet,folderIndex,0]
+	[RoutineCall,ZFU_DropdownNew,resDropdown ]
+
+	//ask the user for a file so that we can get the folder it is in
+    [VarSet,fileName,""]
+	[VarDef,i,0]
+
+		[VarSet,folderName,[FileNameResolvePath,folderName]]
+
+		[VarSet,fileCount,[FileExecute,[Var,ZFILEUTILDLL],"GetFileNumber",folderName]]//get the number of files/folders
+		[If,fileCount < 0,[Note,"Error getting number of files in folder"]]
+		//if we have some files
+		[If, fileCount > 0,
+			//open the folder
+			[VarDef,arrayFile(fileCount)]
+			[VarSet,err,[FileExecute,[Var,ZFILEUTILDLL],"OpenFolder",folderName]]
+				//	[note,folderName]
+			//if we can't open the folder exit the zscript
+			[If,err,[Note,"Error opening folder."][Exit]]
+			//create a memblock to get the file name
+			[MemCreate,ZFileUtils_list, 256, 0]
+			[Loop,fileCount,//loop through the files
+				//get the filename
+				[VarSet,err,[FileExecute,[Var,ZFILEUTILDLL],"GetFile",,,ZFileUtils_list]]	
+				//an error means we've reached the end of the list, so exit the loop	
+				[If,err,[LoopExit]]
+				//otherwise write the file name from the memblock to a variable
+				[MemReadString, ZFileUtils_list,fileName]
+                [RoutineCall,LogMessage, [StrMerge, "filename ",fileName]]
+				[VarSet,isaFile,0]
+				//check if it's a file	
+				[RoutineCall,CheckIsFile,isaFile,fileName]
+				//if it's a file	
+				[If,isaFile,
+					//increment the number of files
+				
+					//display the file name
+					[If,(fileIndex+folderIndex <= 30),//just list the first 30 files&folders
+						//	[note,fileName]
+						[VarSet,fileName,[StrExtract, fileName,1,[StrLength,fileName]-5]]
+						[RoutineCall,ZFU_DropdownAdd,resDropdown,fileName]
+					]
+						[VarInc, fileIndex]
+					[VarInc, i]
+				]//end if it is a file
+			]//end loop
+			//delete the memblock as we've done with it
+			[MemDelete,ZFileUtils_list]
+			//***must close the folder***
+			[VarSet,err,[FileExecute,[Var,ZFILEUTILDLL],"CloseFolder",folderName]]
+			[If,err,[Note,"Error closing folder."]]		
+		]//end if file number >0	
+,folderName]

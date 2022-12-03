@@ -1,0 +1,49 @@
+// equality of strings // requires string find
+[RoutineDef, StrEquals,
+	[VarSet, gResult,0]
+[If,
+	([StrFind,str1,str2 ]>-1) && ([StrLength, str1]==[StrLength, str2])
+	,
+	[VarSet, gResult,1]
+	,
+	[VarSet, gResult,0]
+]
+,str1,str2]
+
+
+[RoutineDef, SplitString /* Split a string
+//usage
+[RoutineCall, GetCharCount,astring,"/"]
+[VarDef,arrayItems(gResult+1)]
+[RoutineCall, SplitString,astring,"/",arrayItems]
+[RoutineCall, NoteFromArray, arrayItems]
+*/,
+	[VarSet, i,0]
+	[VarSet, index,0]
+	[VarSet, start,0]
+	[VarSet, end,0]
+	[VarSet, accumulator,""]
+	[VarSet, current,""]
+	[VarSet, gResult,0]
+	
+	[VarSet,arraySize,[VarSize,array]+1]
+	[Loop,[StrLength,string],
+		[VarSet, current,[StrExtract, string,start,end]]
+		//[RoutineCall,LogMessage,[StrMerge," current ",current]]
+		[if,[StrFind, current,char]==0,
+			//[RoutineCall,LogMessage,[StrMerge,"SplitString accumulator ",index]]
+			[VarSet, array(index),accumulator]
+			[VarSet, index,index+1]
+			[VarSet, accumulator, ""]
+		
+			,
+		 	[VarSet, accumulator, [strmerge,accumulator,current]]
+			 	
+		]
+	[VarSet, start,i+1]
+	[VarSet, end,start]
+
+	,i]
+	[VarSet, array(index),accumulator]
+	//[VarSet, gResult,[VarSize,[StrLength,string]]]
+,string,char,array]

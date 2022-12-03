@@ -1,0 +1,34 @@
+[RoutineDef, IsHidden, 
+	[VarSet, info, [IGetInfo, 29901]] 
+	[VarSet,gResult,1]
+	 [Notebar,res]
+	[if,  [StrFind, "HiddenPoints=0", info] > 0,
+	 [VarSet,gResult,0]
+	]
+
+ ]
+
+[RoutineDef, GetSubtoolNameFromId,
+	[VarDef,gResult,""]//defines variable as empty string
+    [SubToolSelect,[Val,id]]//selects the subtool by number
+	[VarSet,gResult,[IGetTitle,Tool:ItemInfo]]//gets the tool name
+	[VarSet,gResult,[StrExtract,gResult,0,[StrLength,gResult]-2]]//trims off period at the end	
+,
+id]
+
+[RoutineDef, GetCurrentSubtoolName,
+	[VarDef,gResult,""]//defines variable as empty string
+    [SubToolSelect,[Val,id]]//selects the subtool by number
+	[VarSet,gResult,[IGetTitle,Tool:ItemInfo]]//gets the tool name
+	[VarSet,gResult,[StrExtract,gResult,0,[StrLength,gResult]-2]]//trims off period at the end	
+,
+id]
+[RoutineDef, IsSubtoolVisible,
+    [If,[SubToolGetStatus,#id]> 16, // visible
+		[VarSet, gResult,1]
+		,
+		[VarSet, gResult,0]
+	]
+	,
+	id
+]
